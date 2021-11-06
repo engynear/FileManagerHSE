@@ -1,0 +1,19 @@
+﻿Type help <command> to see detailed info about command.
+Commands list:
+cd <dirPath> - Change to directory.
+ls - List current directory contents.
+cat <fileDir> - Display file’s contents to the console.
+pwd - Display the pathname for the current directory.
+disk - Displays available drives 
+        and allows you to switch between them.
+help <command> - Display the help information for the specified command.
+fileList - List all files in current directory.
+fileList <searchPattern> - List files in current dir matching the mask.
+dirList - List all directories in current directory.
+dirList <searchPattern> - List directories in current dir matching the mask.
+rm <path> - Remove (delete) file(s) and/or directories.
+copy <fileToCopy> <path> - Copy file to specified directory.
+mv <fileToMove> <path> <overwrite> - Move file to specified directory.
+touch <fileName> - Create an empty file with the specified name.
+concat <file1Path> <file2Path> <newFilePath> - Concatenate two files.
+exit - Close application.

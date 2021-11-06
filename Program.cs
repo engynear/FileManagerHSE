@@ -5,15 +5,12 @@ namespace FileManagerHSE
 {
     class Program
     {
-        
-        static string command = null;
-        static List<string> argsList = new List<string>();
         static void Main(string[] args)
         {
             FileManager fileManager = new("C://");
-            while (true)
+            bool running = true;
+            while (running)
             {
-                //Console.Write(">");
                 string[] input = InputHandler.inputCommand(fileManager);
                 string command = input[0];
                 List<string> arguments = new();
@@ -35,6 +32,7 @@ namespace FileManagerHSE
                         break;
 
                     case "printFile":
+                    case "cat":
                         if (arguments.Count == 1)
                         {
                             UI.PrintFileText(fileManager.GetFile(arguments[0]));
@@ -61,6 +59,10 @@ namespace FileManagerHSE
                         break;
 
                     case "help":
+                        if (arguments.Count == 0)
+                            UI.PrintHelpMsg();
+                        else
+                            UI.PrintHelpMsg(arguments[0]);
                         break;
 
                     case "fileList":
@@ -78,20 +80,25 @@ namespace FileManagerHSE
 
                     case "rm":
                     case "deleteFile":
-                        if (!(arguments.Count == 1))
-                        {
+                        if (!(arguments.Count == 1))     
                             UI.PrintErrorMsg("Wrong arguments, type file path");
-                        }
-                        fileManager.deleteFile(arguments[0]);
+                        else 
+                            fileManager.deleteFile(arguments[0]);
                         break;
 
                     case "copy":
-                        fileManager.copyFile(arguments[0], arguments[1]);
+                        if (!(arguments.Count == 2))
+                            UI.PrintErrorMsg("Wrong arguments, type file path");
+                        else
+                            fileManager.copyFile(arguments[0], arguments[1]);
                         break;
 
                     case "mv":
                     case "move":
-                        fileManager.moveFile(arguments[0], arguments[1]);
+                        if (!(arguments.Count == 2))                       
+                            UI.PrintErrorMsg("Wrong arguments, type file path");
+                        else
+                            fileManager.moveFile(arguments[0], arguments[1]);
                         break;
 
                     case "touch":
@@ -105,7 +112,14 @@ namespace FileManagerHSE
                         break;
 
                     case "concat":
-                        fileManager.concatFiles(arguments[0], arguments[1], arguments[2]);
+                        if (!(arguments.Count == 3))
+                            UI.PrintErrorMsg("Wrong arguments, type file path");
+                        else
+                            fileManager.concatFiles(arguments[0], arguments[1], arguments[2]);
+                        break;
+
+                    case "exit":
+                        running = false;
                         break;
 
                     default:

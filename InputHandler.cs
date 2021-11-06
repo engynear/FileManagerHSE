@@ -15,6 +15,9 @@ namespace FileManagerHSE
             StringBuilder sb = new();
             int cur_pose = 0;
             string cur_input = "";
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+
             do
             {
                 input = Console.ReadKey();
@@ -144,13 +147,16 @@ namespace FileManagerHSE
                     Console.Clear();
                     sb.Clear();
                     cur_pose = 0;
-                    Console.WriteLine("Command too long, put the command on one line");
+                    UI.PrintErrorMsg("Command too long, put the command on one line");
+                    Console.ForegroundColor = ConsoleColor.Yellow;
                 }
 
             } while (input.Key != ConsoleKey.Enter);
             lastInput = sb.ToString();
             Console.Write("\n");
             sb.Clear();
+            UI.SetDefaultConsoleSettings();
+
             return getArguments(lastInput);
         }
 

@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Security;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace FileManagerHSE
 {
@@ -58,19 +56,72 @@ namespace FileManagerHSE
             return false;
         }
 
-        public FileInfo[] GetFiles(string searchPattern = "*.*")
+        public FileInfo[] GetFiles(string searchPattern = "*")
         {
-            return workingDirectory.GetFiles(searchPattern);
+            try
+            {
+                return workingDirectory.GetFiles(searchPattern);
+            }catch(Exception e)
+            {
+                switch (e)
+                {
+                    case ArgumentException:
+                        UI.PrintErrorMsg("Wrong searchOption argument");
+                        break;
+                    case DirectoryNotFoundException:
+                        UI.PrintErrorMsg("The current working directory has been deleted or changed.\n" +
+                            "Try to change working directory (cd).");
+                        break;
+                    case SecurityException:
+                        UI.PrintErrorMsg("Directory access error.");
+                        break;
+                }
+                return new FileInfo[0];
+            }
+            
         }
 
         public DirectoryInfo[] GetDirectories(string searchPattern = "*")
         {
-            return workingDirectory.GetDirectories(searchPattern);
+            try
+            {
+                return workingDirectory.GetDirectories(searchPattern);
+            }catch(Exception e)
+            {
+                switch (e)
+                {
+                    case DirectoryNotFoundException:
+                        UI.PrintErrorMsg("The current working directory has been deleted or changed.\n" +
+                            "Try to change working directory (cd).");
+                        break;
+                    case SecurityException:
+                    case UnauthorizedAccessException:
+                        UI.PrintErrorMsg("Directory access error.");
+                        break;
+
+                }
+                return new DirectoryInfo[0];
+            }
+
         }
 
         public FileSystemInfo[] GetContent()
         {
-            return workingDirectory.GetFileSystemInfos();
+            try
+            {
+                return workingDirectory.GetFileSystemInfos();
+            }
+            catch (Exception e)
+            {
+                switch (e)
+                {
+                    case DirectoryNotFoundException:
+                        UI.PrintErrorMsg("The current working directory has been deleted or changed.\n" +
+                            "Try to change working directory (cd).");
+                        break;
+                }
+                return new FileSystemInfo[0];
+            }
         }
 
         public DirectoryInfo getWorkingDirectory()
@@ -80,15 +131,22 @@ namespace FileManagerHSE
 
         public bool selectDisk()
         {
-            Console.WriteLine("Select disk:");
-            int i = 1;
+            UI.PrintLine("Select disk:");
             DriveInfo[] drives = DriveInfo.GetDrives();
-            foreach (var drive in drives)
+            for(int i = 0; i<drives.Length; i++)
             {
-                UI.PrintLine((i++)+". " + drive.Name);
+                UI.PrintLine((i+1) + ". " + drives[i].Name);
             }
             UI.Print("Type number of disk: ");
-            int selection = Int32.Parse(Console.ReadLine());
+            int selection = 0;
+            try
+            {
+                selection = Int32.Parse(Console.ReadLine());
+            }catch(Exception e)
+            {
+
+                return false;
+            }
             if (selection - 1 >= drives.Length)
             {
                 UI.PrintErrorMsg("Selection failed, index out of range");
@@ -98,13 +156,44 @@ namespace FileManagerHSE
         }
 
 
-
         public bool deleteFile(string filePath)
         {
             filePath = toAbsolutePath(filePath);
             if (!File.Exists(filePath))
                 return false;
-            File.Delete(filePath);
+            try
+            {
+                File.Delete(filePath);
+            }
+            catch (Exception e)
+            {
+                switch (e)
+                {
+                    case UnauthorizedAccessException:
+                        UI.PrintErrorMsg("Access exception.");
+                        break;
+                    case ArgumentException:
+                        UI.PrintErrorMsg("Wrong arguments.");
+                        break;
+                    case PathTooLongException:
+                        UI.PrintErrorMsg("Path too long.");
+                        break;
+                    case DirectoryNotFoundException:
+                        UI.PrintErrorMsg("Working directory has been changed or deleted." +
+                            "\n Or can`t find target directory");
+                        break;
+                    case FileNotFoundException:
+                        UI.PrintErrorMsg("File not found.");
+                        break;
+                    case IOException:
+                        UI.PrintErrorMsg("Input/Ouput exception.");
+                        break;
+                    case NotSupportedException:
+                        UI.PrintErrorMsg("Not supported exception.");
+                        break;
+                }
+                return false;
+            }
             return true;
         }
 
@@ -114,7 +203,40 @@ namespace FileManagerHSE
             copyDestPath = toAbsolutePath(copyDestPath);
             if (Path.GetExtension(copyDestPath) == "")
                 copyDestPath += "/" + Path.GetFileName(filePath);
-            File.Copy(filePath, copyDestPath, overwrite);
+            try
+            {
+                File.Copy(filePath, copyDestPath, overwrite);
+            }
+            catch (Exception e)
+            {
+                switch (e)
+                {
+                    case UnauthorizedAccessException:
+                        UI.PrintErrorMsg("Access exception.");
+                        break;
+                    case ArgumentException:
+                        UI.PrintErrorMsg("Wrong arguments.");
+                        break;
+                    case PathTooLongException:
+                        UI.PrintErrorMsg("Path too long.");
+                        break;
+                    case DirectoryNotFoundException:
+                        UI.PrintErrorMsg("Working directory has been changed or deleted." +
+                            "\n Or can`t find target directory");
+                        break;
+                    case FileNotFoundException:
+                        UI.PrintErrorMsg("File to copy not found.");
+                        break;
+                    case IOException:
+                        UI.PrintErrorMsg("Input/Ouput exception.");
+                        break;
+                    case NotSupportedException:
+                        UI.PrintErrorMsg("Not supported exception.");
+                        break;
+                }
+                return false;
+            }
+            
             return true;
         }
 
@@ -126,7 +248,49 @@ namespace FileManagerHSE
         public bool createFile(string filePath, string encoding = "UTF-8")
         {
             filePath = toAbsolutePath(filePath);
-            using (StreamWriter sw = new StreamWriter(File.Open(filePath, FileMode.Create), Encoding.GetEncoding(encoding))) {
+            FileStream fs;
+            Encoding enc;
+            try
+            {
+                fs = File.Open(filePath, FileMode.Create);
+            }
+            catch (Exception e)
+            {
+                switch (e)
+                {
+                    case ArgumentException:
+                        UI.PrintErrorMsg("Wrong argument exception.");
+                        break;
+                    case PathTooLongException:
+                        UI.PrintErrorMsg("Path too long exception.");
+                        break;
+                    case DirectoryNotFoundException:
+                        UI.PrintErrorMsg("Working directory has been changed or deleted." +
+                            "\n Or can`t find target directory");
+                        break;
+                    case IOException:
+                        UI.PrintErrorMsg("Input/output exception.");
+                        break;
+                    case UnauthorizedAccessException:
+                        UI.PrintErrorMsg("Access exception.");
+                        break;
+                    case NotSupportedException:
+                        UI.PrintErrorMsg("Not supported.");
+                        break;
+                           
+                }
+                return false;
+            }
+            try
+            {
+                enc = Encoding.GetEncoding(encoding);
+            }catch(ArgumentException e)
+            {
+                UI.PrintErrorMsg("Wrong encoding argument. Set to UTF-8.");
+                enc = Encoding.UTF8;
+            }
+            
+            using (StreamWriter sw = new StreamWriter(fs, enc)) {
                 sw.WriteLine();
                 return true;
             };
@@ -145,29 +309,38 @@ namespace FileManagerHSE
             file2Path = toAbsolutePath(file2Path);
 
             newFilePath = toAbsolutePath(newFilePath);
-            if (Path.GetExtension(newFilePath) == "")
-                newFilePath += "/" + Path.GetFileNameWithoutExtension(file1Path) +
-                        "-" + Path.GetFileNameWithoutExtension(file2Path) +
-                        Path.GetExtension(file1Path);
 
-            string[] file1Lines = File.ReadAllLines(file1Path);
-            string[] file2Lines = File.ReadAllLines(file2Path);
-
-            using (StreamWriter sw = new StreamWriter(File.Open(newFilePath, FileMode.Create), Encoding.UTF8))
+            try
             {
-                foreach (var line in file1Lines)
-                {
-                    sw.WriteLine(line);
-                    UI.PrintLine(line);
-                }
-                foreach (var line in file2Lines)
-                {
-                    sw.WriteLine(line);
-                    UI.PrintLine(line);
-                }
+                if (Path.GetExtension(newFilePath) == "")
+                    newFilePath += "/" + Path.GetFileNameWithoutExtension(file1Path) +
+                            "-" + Path.GetFileNameWithoutExtension(file2Path) +
+                            Path.GetExtension(file1Path);
 
-                return true;
+                string[] file1Lines = File.ReadAllLines(file1Path);
+                string[] file2Lines = File.ReadAllLines(file2Path);
+
+                using (StreamWriter sw = new StreamWriter(File.Open(newFilePath, FileMode.Create), Encoding.UTF8))
+                {
+                    foreach (var line in file1Lines)
+                    {
+                        sw.WriteLine(line);
+                        UI.PrintLine(line);
+                    }
+                    foreach (var line in file2Lines)
+                    {
+                        sw.WriteLine(line);
+                        UI.PrintLine(line);
+                    }
+
+                    return true;
+                }
+            }catch(Exception e)
+            {
+                UI.PrintErrorMsg(e);
+                return false;
             }
+
         }
 
         private bool isAbsolutePath(string path)

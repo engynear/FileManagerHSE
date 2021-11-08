@@ -21,7 +21,7 @@ namespace FileManagerHSE
                 this.workingDirectory = directory;
             else
             {
-                changeDirectory(path);
+                ChangeDirectory(path);
             }
         }
 
@@ -45,7 +45,7 @@ namespace FileManagerHSE
         /// </summary>
         /// <param name="directory">DirectoryInfo object</param>
         /// <returns>true if directory changed; overwise, false.</returns>
-        public bool changeDirectory(DirectoryInfo directory)
+        public bool ChangeDirectory(DirectoryInfo directory)
         {
             if (!directory.Exists)
                 return false;
@@ -59,15 +59,15 @@ namespace FileManagerHSE
         /// </summary>
         /// <param name="path">String directory path</param>
         /// <returns>true if directory changed; overwise, false.</returns>
-        public bool changeDirectory(string path)
+        public bool ChangeDirectory(string path)
         {
             DirectoryInfo directory;
-            path = toAbsolutePath(path);
+            path = CastToAbsolutePath(path);
 
             directory = new(path);
             
             if (directory.Exists)
-                return changeDirectory(directory);
+                return ChangeDirectory(directory);
             else
             {
                 UI.PrintErrorMsg("Invalid directory");
@@ -152,16 +152,22 @@ namespace FileManagerHSE
                         UI.PrintErrorMsg("The current working directory has been deleted or changed.\n" +
                             "Try to change working directory (cd).");
                         break;
+
+                    default:
+                        UI.PrintErrorMsg(e);
+                        break;
                 }
-                return new FileSystemInfo[0];
+
             }
+            return new FileSystemInfo[0];
+
         }
 
         /// <summary>
         /// Returns object of current working directory.
         /// </summary>
         /// <returns>Object of DirectoryInfo type.</returns>
-        public DirectoryInfo getWorkingDirectory()
+        public DirectoryInfo GetWorkingDirectory()
         {
             return workingDirectory;
         }
@@ -170,7 +176,7 @@ namespace FileManagerHSE
         /// Print system drives and allows to switch working directory to one of them.
         /// </summary>
         /// <returns>true if working directory changed; overwise, false</returns>
-        public bool selectDisk()
+        public bool SelectDisk()
         {
             UI.PrintLine("Select disk:");
             DriveInfo[] drives = DriveInfo.GetDrives();
@@ -185,15 +191,16 @@ namespace FileManagerHSE
                 selection = Int32.Parse(Console.ReadLine());
             }catch(Exception e)
             {
-
+                UI.PrintErrorMsg(e);
                 return false;
             }
+
             if (selection - 1 >= drives.Length)
             {
                 UI.PrintErrorMsg("Selection failed, index out of range");
                 return false;
             }
-            return changeDirectory(drives[selection-1].Name);
+            return ChangeDirectory(drives[selection-1].Name);
         }
 
 
@@ -202,9 +209,9 @@ namespace FileManagerHSE
         /// </summary>
         /// <param name="filePath">Absolute or relative file path</param>
         /// <returns>true if file deleted; overwise, false.</returns>
-        public bool deleteFile(string filePath)
+        public bool DeleteFile(string filePath)
         {
-            filePath = toAbsolutePath(filePath);
+            filePath = CastToAbsolutePath(filePath);
             if (!File.Exists(filePath))
                 return false;
             try
@@ -250,10 +257,10 @@ namespace FileManagerHSE
         /// <param name="copyDestPath">Absolute or relative new file path</param>
         /// <param name="overwrite">Is it allowed to overwrite file</param>
         /// <returns>true if file copied; overwise, false.</returns>
-        public bool copyFile(string filePath, string copyDestPath, bool overwrite = true)
+        public bool CopyFile(string filePath, string copyDestPath, bool overwrite = true)
         {
-            filePath = toAbsolutePath(filePath);
-            copyDestPath = toAbsolutePath(copyDestPath);
+            filePath = CastToAbsolutePath(filePath);
+            copyDestPath = CastToAbsolutePath(copyDestPath);
             if (Path.GetExtension(copyDestPath) == "")
                 copyDestPath += "/" + Path.GetFileName(filePath);
             try
@@ -300,9 +307,9 @@ namespace FileManagerHSE
         /// <param name="moveDestPath">Absolute or relative new file path and name(optional)</param>
         /// <param name="overwrite">Is it allowed to overwrite file</param>
         /// <returns>true if file moved correct; overwise, false.</returns>
-        public bool moveFile(string filePath, string moveDestPath, bool overwrite = true)
+        public bool MoveFile(string filePath, string moveDestPath, bool overwrite = true)
         {
-            return copyFile(filePath, moveDestPath, overwrite) && deleteFile(filePath);
+            return CopyFile(filePath, moveDestPath, overwrite) && DeleteFile(filePath);
         }
 
         /// <summary>
@@ -311,9 +318,9 @@ namespace FileManagerHSE
         /// <param name="filePath">Absolute or relative path of a new file</param>
         /// <param name="encoding">New file encoding (UTF8, ASCII or UNICODE)</param>
         /// <returns>true if file created; overwise, false.</returns>
-        public bool createFile(string filePath, string encoding = "UTF-8")
+        public bool CreateFile(string filePath, string encoding = "UTF-8")
         {
-            filePath = toAbsolutePath(filePath);
+            filePath = CastToAbsolutePath(filePath);
             FileStream fs;
             Encoding enc;
             try
@@ -371,7 +378,7 @@ namespace FileManagerHSE
         /// <returns>Object of FileInfo type</returns>
         public FileInfo GetFile(string filePath)
         {
-            filePath = toAbsolutePath(filePath);
+            filePath = CastToAbsolutePath(filePath);
             return new FileInfo(filePath);
         }
 
@@ -380,14 +387,14 @@ namespace FileManagerHSE
         /// </summary>
         /// <param name="filesPath">List of paths to files to concatenate</param>
         /// <returns>true if file concatenate succesfull; overwise, false.</returns>
-        public bool concatFiles(string[] filesPath)
+        public bool ConcatFiles(string[] filesPath)
         {
             try
             {
                 string[] fileLines;
                 foreach(var file in filesPath)
                 {
-                    UI.PrintFileText(new FileInfo(toAbsolutePath(file)));
+                    UI.PrintFileText(new FileInfo(CastToAbsolutePath(file)));
                 }
                 return true;
             }catch(Exception e)
@@ -398,12 +405,22 @@ namespace FileManagerHSE
 
         }
 
+        /// <summary>
+        /// Returns whether the path is absolute.
+        /// </summary>
+        /// <param name="path">Absolute or relative path</param>
+        /// <returns>true if path is absolute; overwise, false.</returns>
         private bool isAbsolutePath(string path)
         {
             return Path.IsPathRooted(path);
         }
 
-        public string toAbsolutePath(string path)
+        /// <summary>
+        /// Casts path to an absolute.
+        /// </summary>
+        /// <param name="path">Absolute or relative path</param>
+        /// <returns>String path.</returns>
+        public string CastToAbsolutePath(string path)
         {
             if (!isAbsolutePath(path))
                 path = workingDirectory + "/" + path;

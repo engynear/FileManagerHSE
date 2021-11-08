@@ -1,36 +1,50 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 
 namespace FileManagerHSE
 {
     static class UI
     {
+
+        /// <summary>
+        /// Sets default console settings.
+        /// </summary>
         public static void SetDefaultConsoleSettings()
         {
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
         }
+
+        /// <summary>
+        /// Prints an error message.
+        /// </summary>
+        /// <param name="errorMsg">String error message</param>
         public static void PrintErrorMsg(string errorMsg)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(errorMsg);
-            Console.ForegroundColor = ConsoleColor.White;
-        }
-        public static void PrintErrorMsg(Exception e)
-        {
-            Console.ReadLine();
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(e.Message);
-            Console.ForegroundColor = ConsoleColor.White;
+            SetDefaultConsoleSettings();
         }
 
+        /// <summary>
+        /// Prints an error message.
+        /// </summary>
+        /// <param name="e">Error object</param>
+        public static void PrintErrorMsg(Exception e)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(e.Message);
+            SetDefaultConsoleSettings();
+        }
+
+        /// <summary>
+        /// Prints the content from array by element.
+        /// </summary>
+        /// <param name="list">List of content</param>
         public static void PrintContent(FileSystemInfo[] list)
         {
-            Console.ForegroundColor = ConsoleColor.White;
             bool is_dir;
             foreach(var element in list)
             {
@@ -44,20 +58,28 @@ namespace FileManagerHSE
             }
         }
 
-        
+        /// <summary>
+        /// Prints message with line break.
+        /// </summary>
+        /// <param name="msg">Message</param>
         public static void PrintLine(string msg)
         {
-            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine(msg);
         }
 
+        /// <summary>
+        /// Prints message without line break.
+        /// </summary>
+        /// <param name="msg">Message</param>
         public static void Print(string msg)
         {
-            Console.ForegroundColor = ConsoleColor.White;
             Console.Write(msg);
         }
 
-        
+        /// <summary>
+        /// Prints the contents of a text file in the specified encoding
+        /// </summary>
+        /// <param name="encoding">Encoding (UTF8, ASCII or UNICODE)</param>
         public static bool PrintFileText(FileInfo file, string encoding = "UTF-8")
         {
             string[] fileLines;
@@ -76,7 +98,11 @@ namespace FileManagerHSE
             }
             return true;
         }
-        
+
+        /// <summary>
+        /// Help messages handler
+        /// </summary>
+        /// <param name="command">Specified command to print help message</param>
         public static void PrintHelpMsg(string command = null)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -138,16 +164,36 @@ namespace FileManagerHSE
                 case "exit":
                     message = "exit - Close application.";
                     break;
+                case "showPath":
+                    message = "showPath <bool> - shows current working dir in console input line if true";
+                    break;
                 case null:
                     try
                     {
                         message = File.ReadAllText("../../../help.txt");
                     }catch(Exception e)
                     {
-                        message = "Type help <command> to see detailed info about command.\n" +
-                            "Commands list:\n cd, ls, cat, pwd, disk, help,\n" +
-                            "fileList, dirList, rm, copy, mv, touch, concat, exit";
-                            
+                        Console.WriteLine("Type help <command> to see detailed info about command.");
+                        Console.WriteLine("Commands list:");
+                        Console.WriteLine("cd <dirPath> - Change to directory.");
+                        Console.WriteLine("ls - List current directory contents.");
+                        Console.WriteLine("cat <fileDir> - Display file’s contents to the console.");
+                        Console.WriteLine("pwd - Display the pathname for the current directory.");
+                        Console.WriteLine("disk - Displays available drives " +
+                            "\nand allows you to switch between them.");
+                        Console.WriteLine("help <command> - Display the help information for the specified command.");
+                        Console.WriteLine("fileList - List all files in current directory.");
+                        Console.WriteLine("fileList <searchPattern> - List files in current dir matching the mask.");
+                        Console.WriteLine("dirList - List all directories in current directory.");
+                        Console.WriteLine("dirList <searchPattern> - List directories in current dir matching the mask.");
+                        Console.WriteLine("rm <path> - Remove (delete) file(s) and/or directories.");
+                        Console.WriteLine("copy <fileToCopy> <path> - Copy file to specified directory.");
+                        Console.WriteLine("mv <fileToMove> <path> <overwrite> - Move file to specified directory.");
+                        Console.WriteLine("touch <fileName> - Create an empty file with the specified name.");
+                        Console.WriteLine("concat <file1Path> <file2Path> <newFilePath> - Concatenate two files.");
+                        Console.WriteLine("showPath <bool> - Shows current working dir in console input line if true");
+                        Console.WriteLine("exit - Close application.");
+                        message = "";
                     }
                     break;
                 default:
@@ -156,14 +202,7 @@ namespace FileManagerHSE
             }
             Console.WriteLine(message);
             SetDefaultConsoleSettings();
-        }
-
-        private static void printSeparator(char separator = '-', int length = 30)
-        {
-            StringBuilder sb = new();
-            for (int i = 0; i < length; i++)
-                sb.Append(separator);
-            Console.WriteLine(sb.ToString());
+            
         }
     }
 }

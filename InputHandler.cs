@@ -1,188 +1,234 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace FileManagerHSE
 {
     static class InputHandler
     {
-        private static string lastInput = "";
-        public static string[] inputCommand(FileManager fileManager)
+        private static List<string> commandHistory = new();
+
+        /// <summary>
+        /// Returns whether the path is absolute
+        /// </summary>
+        /// <param name="fileManager">Object of FileManager class</param>
+        /// <param name="waitCommandLine">String line with which the command input will start</param>
+        /// <returns>Array of string type</returns>
+        public static string[] inputCommand(FileManager fileManager, string waitCommandLine = "> ")
         {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+
             ConsoleKeyInfo input;
             StringBuilder sb = new();
-            int cur_pose = 0;
-            string cur_input = "";
-
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write(waitCommandLine);
+            int curPos = 0;
+            int commandHistoryPosition = 0;
+            string curCommandBuffer = "";
 
             do
             {
                 input = Console.ReadKey();
+
                 switch (input.Key)
                 {
-                    case ConsoleKey.Backspace:
-                        if (cur_pose <= sb.Length && cur_pose > 0)
-                            sb.Remove(--cur_pose, 1);
-                        else if (cur_pose > 0)
-                            Console.CursorLeft -= 1;
-
-                        refresh(sb);
-                        break;
-
-                    case ConsoleKey.Delete:
-                        if (cur_pose < sb.Length)
-                            sb.Remove(cur_pose, 1);
-                        refresh(sb);
+                    case ConsoleKey.Enter:
+                        commandHistory.Insert(0, sb.ToString());
                         break;
 
                     case ConsoleKey.LeftArrow:
-                        if (Console.CursorLeft > 0)
-                        {
-                            cur_pose--;
-                            Console.CursorLeft -= 1;
-                        }
+                        if (Console.CursorLeft > waitCommandLine.Length)
+                            curPos--;
                         break;
 
                     case ConsoleKey.RightArrow:
-                        if (Console.BufferWidth-1 > Console.CursorLeft)
-                        {
-                            cur_pose++;
-                            Console.CursorLeft += 1;
-                        }
+                        if (Console.BufferWidth - 1 > Console.CursorLeft)
+                            curPos++;
                         break;
 
                     case ConsoleKey.UpArrow:
-                        cur_input = sb.ToString();
-                        sb = new(lastInput);
-                        cur_pose = lastInput.Length;
-                        refresh(sb);
+                        if (commandHistoryPosition == 0)
+                            curCommandBuffer = sb.ToString();
+
+                        if (commandHistoryPosition >= commandHistory.Count)
+                            break;
+
+                        sb = new StringBuilder(commandHistory[commandHistoryPosition]);
+                        curPos = sb.Length;
+                        commandHistoryPosition++;
                         break;
 
                     case ConsoleKey.DownArrow:
-                        sb = new(cur_input);
-                        cur_pose = cur_input.Length;
-                        refresh(sb);
+                        if (commandHistoryPosition == 0)
+                            break;
+                        else if (commandHistoryPosition == 1)
+                            sb = new StringBuilder(curCommandBuffer);
+                        else
+                            sb = new StringBuilder(commandHistory[commandHistoryPosition - 2]);
+
+                        curPos = sb.Length;
+                        commandHistoryPosition--;
                         break;
 
-                    case ConsoleKey.Enter:
-                    case ConsoleKey.Escape:
+                    case ConsoleKey.Backspace:
+                        if (curPos <= sb.Length && curPos > 0)
+                            sb.Remove(--curPos, 1);
+                        break;
+
+                    case ConsoleKey.Delete:
+                        if (curPos < sb.Length)
+                            sb.Remove(curPos, 1);
                         break;
 
                     case ConsoleKey.Tab:
-                        Console.CursorLeft = sb.Length;
-                        cur_pose = sb.Length;
                         string[] args = getArguments(sb.ToString());
-                        string to_complete = args[args.Length - 1];
+                        if (args.Length != 1)
+                        {
+                            string toComplete = args[args.Length - 1];
+                            bool isInsideQuotes = toComplete.Contains("\"");
+                            if (toComplete.EndsWith("\""))
+                                sb.Remove(sb.Length - 1, 1);
+                            toComplete = toComplete.Replace("\"", "");
+                            sb = autoCompleteContent(fileManager, toComplete, sb);
 
-                        if (to_complete.Contains("\""))
-                        {
-                            to_complete = to_complete.Replace("\"", "");
-                        }
 
-                        string dir = fileManager.getWorkingDirectory().FullName;
-                        if (to_complete.Contains('/') || to_complete.Contains('\\'))
-                        {
-                            string toCompletePath = fileManager.toAbsolutePath(to_complete);
-                            to_complete = Path.GetFileName(toCompletePath);
-                            dir = toCompletePath.Substring(0,
-                                toCompletePath.Length - to_complete.Length); 
+                            if (isInsideQuotes)
+                                sb.Append("\"");
                         }
-
-                        
-                        List<string> fit_names = new List<string>();
-                        foreach (var info in new FileManager(dir).GetContent())
-                        {
-                            if (info.Name.ToLower().StartsWith(to_complete.ToLower()))
-                            {
-                                fit_names.Add(info.Name);
-                            }
-                        }
-                        if (fit_names.Count == 1)
-                        {
-                            cur_pose -= to_complete.Length;
-                            sb.Remove(cur_pose, to_complete.Length);
-                            sb.Append(fit_names[0]);
-                            cur_pose += fit_names[0].Length;
-                        }
-                        else if (fit_names.Count > 1)
-                        {
-                            for (int i = 0; i < fit_names.Count; i++)
-                            {
-                                fit_names[i] = fit_names[i].Substring(to_complete.Length);
-                            }
-                            bool checking = true;
-                            string check = "";
-                            for (int i = 1; i < fit_names[0].Length + 1; i++)
-                            {
-                                check = fit_names[0].Substring(0, i);
-                                for (int j = 0; j < fit_names.Count; j++)
-                                {
-                                    if (!fit_names[j].StartsWith(check))
-                                        checking = false;
-                                }
-                                if (!checking)
-                                {
-                                    check = check.Substring(0, check.Length - 1);
-                                    break;
-                                }
-                            }
-                            sb.Append(check);
-                            cur_pose += check.Length;
-                        }
-                        refresh(sb);
+                        curPos = sb.Length;
                         break;
 
                     default:
-                        try
-                        {
-                            sb.Insert(cur_pose++, input.KeyChar);
-                        }
-                        catch (Exception)
-                        {
+                        if (curPos <= sb.Length)
+                            sb.Insert(curPos, input.KeyChar);
+                        else
+                            sb.Append(input.KeyChar);
+                        curPos++;
 
-                        }
-
-                        refresh(sb);
                         break;
                 }
-                try
+                if (curPos + waitCommandLine.Length < Console.BufferWidth - 1)
+                    refreshInputLine(sb, curPos, waitCommandLine);
+                else
                 {
-                    Console.CursorLeft = cur_pose;
-                }
-                catch (Exception)
-                {
-                    Console.Clear();
+                    clearInputLine();
                     sb.Clear();
-                    cur_pose = 0;
-                    UI.PrintErrorMsg("Command too long, put the command on one line");
+                    curPos = 0;
+                    UI.PrintErrorMsg("Command too long, put the command on one line. (tip: showPath false)");
                     Console.ForegroundColor = ConsoleColor.Yellow;
                 }
 
+
             } while (input.Key != ConsoleKey.Enter);
-            lastInput = sb.ToString();
+
             Console.Write("\n");
             sb.Clear();
             UI.SetDefaultConsoleSettings();
 
-            return getArguments(lastInput);
+            return getArguments(commandHistory[0]);
+
         }
 
-        private static void refresh(StringBuilder sb)
+        /// <summary>
+        /// Completes live to file or directory name by part of it.
+        /// </summary>
+        /// <returns>Obejct of StringBuilder class</returns>
+        private static StringBuilder autoCompleteContent(FileManager fileManager, string toComplete, StringBuilder sb)
         {
-            clearConsole();
-            Console.Write("\r");
-            Console.Write(sb.ToString());
+            string dir = fileManager.GetWorkingDirectory().FullName;
+            if (toComplete.Contains('/') || toComplete.Contains('\\'))
+            {
+                string toCompletePath = fileManager.CastToAbsolutePath(toComplete);
+                toComplete = Path.GetFileName(toCompletePath);
+                dir = toCompletePath.Substring(0,
+                    toCompletePath.Length - toComplete.Length);
+            }
+
+            List<string> fitNames = new List<string>();
+            foreach (var info in new FileManager(dir).GetContent())
+            {
+                if (info.Name.ToLower().StartsWith(toComplete.ToLower()))
+                {
+                    fitNames.Add(info.Name);
+                }
+            }
+
+            return autoComplete(fitNames, toComplete, sb, fileManager);
         }
 
-        private static void clearConsole()
+        private static StringBuilder autoComplete(List<string> fitNames, string toComplete, StringBuilder sb, FileManager fileManager)
+        {
+            if (fitNames.Count == 1)
+            {
+                sb.Remove(sb.Length - toComplete.Length, toComplete.Length);
+                sb.Append(fitNames[0]);
+                string[] args = getArguments(sb.ToString());
+                if (Directory.Exists(fileManager.CastToAbsolutePath(args[args.Length - 1])))
+                    sb.Append('/');
+                if (fitNames[0].Contains(" "))
+                    sb.Append("\"");
+
+
+
+
+
+                return sb;
+
+
+            }
+            else if (fitNames.Count > 1)
+            {
+                for (int i = 0; i < fitNames.Count; i++)
+                {
+                    fitNames[i] = fitNames[i].Substring(toComplete.Length);
+                }
+                bool checking = true;
+                string check = "";
+                for (int i = 1; i < fitNames[0].Length + 1; i++)
+                {
+                    check = fitNames[0].Substring(0, i);
+                    for (int j = 0; j < fitNames.Count; j++)
+                    {
+                        if (!fitNames[j].StartsWith(check))
+                            checking = false;
+                    }
+                    if (!checking)
+                    {
+                        check = check.Substring(0, check.Length - 1);
+                        break;
+                    }
+                }
+
+                return sb;
+            }
+            return sb;
+        }
+
+        /// <summary>
+        /// Reprints line of console command input.
+        /// </summary>
+        private static void refreshInputLine(StringBuilder sb, int curPos, string waitCommandLine)
+        {
+            clearInputLine();
+            Console.Write(waitCommandLine);
+            Console.Write(sb.ToString());
+            Console.CursorLeft = curPos + waitCommandLine.Length;
+        }
+
+        /// <summary>
+        /// Clears current console line.
+        /// </summary>
+        private static void clearInputLine()
         {
             Console.Write("\r");
             Console.Write(new String(' ', Console.BufferWidth - 1));
+            Console.Write("\r");
         }
 
+        /// <summary>
+        /// Splits string by spaces, ignoring spaces inside quotes.
+        /// </summary>
+        /// <returns>Array of string type.</returns>
         private static string[] getArguments(string str)
         {
             char[] paramChars = str.ToCharArray();

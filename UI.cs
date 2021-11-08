@@ -22,6 +22,7 @@ namespace FileManagerHSE
         }
         public static void PrintErrorMsg(Exception e)
         {
+            Console.ReadLine();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(e.Message);
             Console.ForegroundColor = ConsoleColor.White;

@@ -9,7 +9,11 @@ namespace FileManagerHSE
     {
         private DirectoryInfo workingDirectory;
 
-
+        /// <summary>
+        /// FileManager constructor
+        /// </summary>
+        /// <param name="path">Initial working directory name</param>
+        /// <returns>Object of class FileManager</returns>
         public FileManager(string path)
         {
             DirectoryInfo directory = new(path);
@@ -21,6 +25,11 @@ namespace FileManagerHSE
             }
         }
 
+        /// <summary>
+        /// FileManager constructor
+        /// </summary>
+        /// <param name="workingDirectory">Initial DirectoryInfo object</param>
+        /// <returns>Object of class FileManager</returns>
         public FileManager(DirectoryInfo workingDirectory)
         {
             this.workingDirectory = workingDirectory;
@@ -31,6 +40,11 @@ namespace FileManagerHSE
             this.workingDirectory = new DirectoryInfo(Directory.GetCurrentDirectory());
         }
 
+        /// <summary>
+        /// Changes current working directory.
+        /// </summary>
+        /// <param name="directory">DirectoryInfo object</param>
+        /// <returns>true if directory changed; overwise, false.</returns>
         public bool changeDirectory(DirectoryInfo directory)
         {
             if (!directory.Exists)
@@ -40,6 +54,11 @@ namespace FileManagerHSE
             
         }
 
+        /// <summary>
+        /// Changes current working directory.
+        /// </summary>
+        /// <param name="path">String directory path</param>
+        /// <returns>true if directory changed; overwise, false.</returns>
         public bool changeDirectory(string path)
         {
             DirectoryInfo directory;
@@ -56,6 +75,11 @@ namespace FileManagerHSE
             return false;
         }
 
+        /// <summary>
+        /// Returns a files list from current directory matching the given search pattern.
+        /// </summary>
+        /// <param name="searchPattern">Files mask</param>
+        /// <returns>An array of type FileInfo.</returns>
         public FileInfo[] GetFiles(string searchPattern = "*")
         {
             try
@@ -81,6 +105,11 @@ namespace FileManagerHSE
             
         }
 
+        /// <summary>
+        /// Returns directories list in current directory matching the given searchPattern.
+        /// </summary>
+        /// <param name="searchPattern">Directories mask</param>
+        /// <returns>An array of type DirectoryInfo matching searchPattern.</returns>
         public DirectoryInfo[] GetDirectories(string searchPattern = "*")
         {
             try
@@ -105,6 +134,10 @@ namespace FileManagerHSE
 
         }
 
+        /// <summary>
+        /// Return files and directories list in current directory.
+        /// </summary>
+        /// <returns>An array of FileSystemInfo type.</returns>
         public FileSystemInfo[] GetContent()
         {
             try
@@ -124,11 +157,19 @@ namespace FileManagerHSE
             }
         }
 
+        /// <summary>
+        /// Returns object of current working directory.
+        /// </summary>
+        /// <returns>Object of DirectoryInfo type.</returns>
         public DirectoryInfo getWorkingDirectory()
         {
             return workingDirectory;
         }
 
+        /// <summary>
+        /// Print system drives and allows to switch working directory to one of them.
+        /// </summary>
+        /// <returns>true if working directory changed; overwise, false</returns>
         public bool selectDisk()
         {
             UI.PrintLine("Select disk:");
@@ -156,6 +197,11 @@ namespace FileManagerHSE
         }
 
 
+        /// <summary>
+        /// Deletes specified file at the given path.
+        /// </summary>
+        /// <param name="filePath">Absolute or relative file path</param>
+        /// <returns>true if file deleted; overwise, false.</returns>
         public bool deleteFile(string filePath)
         {
             filePath = toAbsolutePath(filePath);
@@ -197,6 +243,13 @@ namespace FileManagerHSE
             return true;
         }
 
+        /// <summary>
+        /// Copies an existing file to a new file. Overwriting if allowed.
+        /// </summary>
+        /// <param name="filePath">Absolute or relative file to copy path</param>
+        /// <param name="copyDestPath">Absolute or relative new file path</param>
+        /// <param name="overwrite">Is it allowed to overwrite file</param>
+        /// <returns>true if file copied; overwise, false.</returns>
         public bool copyFile(string filePath, string copyDestPath, bool overwrite = true)
         {
             filePath = toAbsolutePath(filePath);
@@ -240,11 +293,24 @@ namespace FileManagerHSE
             return true;
         }
 
-        public bool moveFile(string filePath, string copyDestPath, bool overwrite = true)
+        /// <summary>
+        /// Moves an existing file to specified path. Overwriting if allowed.
+        /// </summary>
+        /// <param name="filePath">Absolute or relative file to move path</param>
+        /// <param name="moveDestPath">Absolute or relative new file path and name(optional)</param>
+        /// <param name="overwrite">Is it allowed to overwrite file</param>
+        /// <returns>true if file moved correct; overwise, false.</returns>
+        public bool moveFile(string filePath, string moveDestPath, bool overwrite = true)
         {
-            return copyFile(filePath, copyDestPath, overwrite) && deleteFile(filePath);
+            return copyFile(filePath, moveDestPath, overwrite) && deleteFile(filePath);
         }
 
+        /// <summary>
+        /// Creates a new file with specified encoding.
+        /// </summary>
+        /// <param name="filePath">Absolute or relative path of a new file</param>
+        /// <param name="encoding">New file encoding (UTF8, ASCII or UNICODE)</param>
+        /// <returns>true if file created; overwise, false.</returns>
         public bool createFile(string filePath, string encoding = "UTF-8")
         {
             filePath = toAbsolutePath(filePath);
@@ -291,50 +357,39 @@ namespace FileManagerHSE
             }
             
             using (StreamWriter sw = new StreamWriter(fs, enc)) {
-                sw.WriteLine();
+                UI.PrintLine("Enter your text:");
+                sw.WriteLine(Console.ReadLine());
                 return true;
             };
             
         }
 
+        /// <summary>
+        /// Returns specified file.
+        /// </summary>
+        /// <param name="filePath">Absolute or relative file path</param>
+        /// <returns>Object of FileInfo type</returns>
         public FileInfo GetFile(string filePath)
         {
             filePath = toAbsolutePath(filePath);
             return new FileInfo(filePath);
         }
 
-        public bool concatFiles(string file1Path, string file2Path, string newFilePath)
+        /// <summary>
+        /// Copies an existing file to a new file. Overwriting if allowed.
+        /// </summary>
+        /// <param name="filesPath">List of paths to files to concatenate</param>
+        /// <returns>true if file concatenate succesfull; overwise, false.</returns>
+        public bool concatFiles(string[] filesPath)
         {
-            file1Path = toAbsolutePath(file1Path);
-            file2Path = toAbsolutePath(file2Path);
-
-            newFilePath = toAbsolutePath(newFilePath);
-
             try
             {
-                if (Path.GetExtension(newFilePath) == "")
-                    newFilePath += "/" + Path.GetFileNameWithoutExtension(file1Path) +
-                            "-" + Path.GetFileNameWithoutExtension(file2Path) +
-                            Path.GetExtension(file1Path);
-
-                string[] file1Lines = File.ReadAllLines(file1Path);
-                string[] file2Lines = File.ReadAllLines(file2Path);
-
-                using (StreamWriter sw = new StreamWriter(File.Open(newFilePath, FileMode.Create), Encoding.UTF8))
+                string[] fileLines;
+                foreach(var file in filesPath)
                 {
-                    foreach (var line in file1Lines)
-                    {
-                        sw.WriteLine(line);
-                        UI.PrintLine(line);
-                    }
-                    foreach (var line in file2Lines)
-                    {
-                        sw.WriteLine(line);
-                        UI.PrintLine(line);
-                    }
-
-                    return true;
+                    UI.PrintFileText(new FileInfo(toAbsolutePath(file)));
                 }
+                return true;
             }catch(Exception e)
             {
                 UI.PrintErrorMsg(e);

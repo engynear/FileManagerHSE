@@ -39,13 +39,19 @@ namespace FileManagerHSE
                         break;
 
                     case ConsoleKey.LeftArrow:
-                        cur_pose--;
-                        Console.CursorLeft -= 1;
+                        if (Console.CursorLeft > 0)
+                        {
+                            cur_pose--;
+                            Console.CursorLeft -= 1;
+                        }
                         break;
 
                     case ConsoleKey.RightArrow:
-                        cur_pose++;
-                        Console.CursorLeft += 1;
+                        if (Console.BufferWidth-1 > Console.CursorLeft)
+                        {
+                            cur_pose++;
+                            Console.CursorLeft += 1;
+                        }
                         break;
 
                     case ConsoleKey.UpArrow:
@@ -71,7 +77,11 @@ namespace FileManagerHSE
                         string[] args = getArguments(sb.ToString());
                         string to_complete = args[args.Length - 1];
 
-                        to_complete = to_complete.Replace("\"", "");
+                        if (to_complete.Contains("\""))
+                        {
+                            to_complete = to_complete.Replace("\"", "");
+                        }
+
                         string dir = fileManager.getWorkingDirectory().FullName;
                         if (to_complete.Contains('/') || to_complete.Contains('\\'))
                         {
@@ -175,16 +185,16 @@ namespace FileManagerHSE
 
         private static string[] getArguments(string str)
         {
-            char[] parmChars = str.ToCharArray();
+            char[] paramChars = str.ToCharArray();
             bool inQuote = false;
-            for (int index = 0; index < parmChars.Length; index++)
+            for (int i = 0; i < paramChars.Length; i++)
             {
-                if (parmChars[index] == '"')
+                if (paramChars[i] == '"')
                     inQuote = !inQuote;
-                if (!inQuote && parmChars[index] == ' ')
-                    parmChars[index] = '\n';
+                if (!inQuote && paramChars[i] == ' ')
+                    paramChars[i] = '\n';
             }
-            return (new string(parmChars)).Split('\n');
+            return (new string(paramChars)).Split('\n');
         }
     }
 }

@@ -112,10 +112,10 @@ namespace FileManagerHSE
                         break;
 
                     case "concat":
-                        if (!(arguments.Count == 3))
-                            UI.PrintErrorMsg("Wrong arguments, type file path");
+                        if (arguments.Count==0)
+                            UI.PrintErrorMsg("No arguments. Type filePaths to concatenate.");
                         else
-                            fileManager.concatFiles(arguments[0], arguments[1], arguments[2]);
+                            fileManager.concatFiles(arguments.ToArray());
                         break;
 
                     case "exit":

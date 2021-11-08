@@ -89,7 +89,7 @@ namespace FileManagerHSE
                             if (toComplete.EndsWith("\""))
                                 sb.Remove(sb.Length - 1, 1);
                             toComplete = toComplete.Replace("\"", "");
-                            sb = autoCompleteContent(fileManager, toComplete, sb);
+                            sb = autoCompleteContent(fileManager, toComplete, sb, isInsideQuotes);
 
 
                             if (isInsideQuotes)
@@ -133,7 +133,7 @@ namespace FileManagerHSE
         /// Completes live to file or directory name by part of it.
         /// </summary>
         /// <returns>Obejct of StringBuilder class</returns>
-        private static StringBuilder autoCompleteContent(FileManager fileManager, string toComplete, StringBuilder sb)
+        private static StringBuilder autoCompleteContent(FileManager fileManager, string toComplete, StringBuilder sb, bool isInsideQuotes)
         {
             string dir = fileManager.GetWorkingDirectory().FullName;
             if (toComplete.Contains('/') || toComplete.Contains('\\'))
@@ -153,19 +153,21 @@ namespace FileManagerHSE
                 }
             }
 
-            return autoComplete(fitNames, toComplete, sb, fileManager);
+            return autoComplete(fitNames, toComplete, sb, fileManager, isInsideQuotes);
         }
 
-        private static StringBuilder autoComplete(List<string> fitNames, string toComplete, StringBuilder sb, FileManager fileManager)
+        private static StringBuilder autoComplete(List<string> fitNames, string toComplete, StringBuilder sb, FileManager fileManager, bool isInsideQuotes)
         {
             if (fitNames.Count == 1)
             {
                 sb.Remove(sb.Length - toComplete.Length, toComplete.Length);
+                if (fitNames[0].Contains(" ") && !isInsideQuotes)
+                    sb.Append("\"");
                 sb.Append(fitNames[0]);
                 string[] args = getArguments(sb.ToString());
                 if (Directory.Exists(fileManager.CastToAbsolutePath(args[args.Length - 1])))
                     sb.Append('/');
-                if (fitNames[0].Contains(" "))
+                if (fitNames[0].Contains(" ") && !isInsideQuotes)
                     sb.Append("\"");
 
 
